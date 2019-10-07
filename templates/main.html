@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>Sockets playground</h1>
+        <h2>Request & Response</h2>
+        <form id="emit">
+            <input type="submit" value="Send Request">
+        </form>
+        <label>Response:</label>
+        <input id="response_input" type="text">
+        <h2>Server side events:</h2>
+        <label>Number 1:</label>
+        <input id="number_1" type="text" value="-1">
+        <label>Number 2:</label>
+        <input id="number_2" type="text" value="-1">
+    </body>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="{{url_for('static', filename='js/socketio.js')}}" ></script>
+    <script src="{{url_for('static', filename='js/sockets.js')}}"></script>
+</html> 
