@@ -57,5 +57,9 @@ def some_event(message):
     emit('some_event_response', response.decode('utf-8'))
 
 
+def create_app():
+    return socketio
+
+
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=False)

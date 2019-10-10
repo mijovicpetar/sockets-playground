@@ -1,7 +1,7 @@
 """Service module."""
 
+import threading
 import traceback
-import gevent
 import zmq
 import random
 import sys
@@ -23,7 +23,6 @@ def respond_recieve():
     """Respond on request."""
     data = 0
     while True:
-        gevent.sleep(0)
         try:
             message = socket_responder.recv(zmq.NOBLOCK)
             response = str(data).encode('utf-8')
@@ -37,7 +36,7 @@ def respond_recieve():
 def publisher():
     """Publish new data to server."""
     while True:
-        gevent.sleep(1)
+        time.sleep(1)
         try:
             data = {
                 'number_1': randint(0, 1000),
@@ -51,7 +50,8 @@ def publisher():
             traceback.print_exc()
 
 
-gevent.joinall([
-    gevent.spawn(respond_recieve),
-    gevent.spawn(publisher)
-])
+respond_recieve_thread = threading.Thread(target=respond_recieve)
+publisher_thread = threading.Thread(target=publisher)
+
+respond_recieve_thread.start()
+publisher_thread.start()
