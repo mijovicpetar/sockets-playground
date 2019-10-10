@@ -24,27 +24,12 @@ def background_thread():
         return ""
 
 
-# class Config(object):
-#     JOBS = [
-#         {
-#             'id': 'read_status_info',
-#             'func': 'application:read_status_info',
-#         }
-#     ]
-
-#     SCHEDULER_API_ENABLED = True
-
 app = Flask(__name__)
-# app.config.from_object(Config())
 socketio = SocketIO(async_mode=None)
 socketio.init_app(app)
-# scheduler = APScheduler()
-# scheduler.init_app(app)
-# scheduler.start()
 
 thread = None
 thread_lock = Lock()
-
 
 context = zmq.Context()
 zmq_main_socket = context.socket(zmq.REQ)
