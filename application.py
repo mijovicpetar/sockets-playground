@@ -3,13 +3,49 @@
 import traceback
 import zmq
 import time
+import gevent
+from threading import Lock
 from flask import Flask, render_template, Response
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, Namespace
+from flask_apscheduler import APScheduler
 
+
+def background_thread():
+    """Get status info from ZeroMq, this is blocking function."""
+    try:
+        print('Okinuo bt')
+        while True:
+            res = zmq_status_socket.recv_string()
+            print('Status info recieved: ', res)
+            socketio.emit('status_subscription', res, namespace="/status")
+            socketio.sleep(1)
+    except:
+        traceback.print_exc()
+        return ""
+
+
+# class Config(object):
+#     JOBS = [
+#         {
+#             'id': 'read_status_info',
+#             'func': 'application:read_status_info',
+#         }
+#     ]
+
+#     SCHEDULER_API_ENABLED = True
 
 app = Flask(__name__)
-socketio = SocketIO()
+# app.config.from_object(Config())
+socketio = SocketIO(async_mode=None)
 socketio.init_app(app)
+# scheduler = APScheduler()
+# scheduler.init_app(app)
+# scheduler.start()
+
+thread = None
+thread_lock = Lock()
+
+
 context = zmq.Context()
 zmq_main_socket = context.socket(zmq.REQ)
 zmq_main_socket.connect("tcp://localhost:5555")
@@ -18,33 +54,14 @@ zmq_status_socket.setsockopt_string(zmq.SUBSCRIBE, "")
 zmq_status_socket.connect("tcp://localhost:5556")
 
 
-def sse_status_info():
-    """Get status info from ZeroMq, this is blocking function."""
-    try:
-        # Recv string is blocking.
-        res = zmq_status_socket.recv_string()
-        print('Status info recieved: ', res)
-        return res
-    except:
-        traceback.print_exc()
-        return ""
+def run_app():
+    app.run(debug=False)
 
 
 @app.route('/')
 def home():
     """Home route."""
     return render_template('main.html')
-
-
-@app.route('/stream')
-def stream_status_information():
-    """SSE route."""
-    def streamer():
-        """Generator method."""
-        while True:
-            # This format is mandatory.
-            yield 'data: {}\n\n'.format(sse_status_info())
-    return Response(streamer(), mimetype="text/event-stream")
 
 
 @socketio.on('some_event', namespace='/app')
@@ -57,8 +74,16 @@ def some_event(message):
     emit('some_event_response', response.decode('utf-8'))
 
 
-def create_app():
-    return socketio
+class MyNamespace(Namespace):
+    def on_connect(self):
+        global thread
+        with thread_lock:
+            if thread is None:
+                thread = socketio.start_background_task(background_thread)
+        emit('my_response', {'data': 'Connected', 'count': 0})
+
+
+socketio.on_namespace(MyNamespace('/status'))
 
 
 if __name__ == '__main__':
