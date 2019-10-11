@@ -19,6 +19,12 @@ $(document).ready(function() {
         console.log('some_event emit occured.')
         return false
     })
+
+    $('form#emit2').submit(function(event) {
+        socket.emit('some_event2', 'data')
+        console.log('some_event2 emit occured.')
+        return false
+    })
 })
 
 function showResponse(msg) {
