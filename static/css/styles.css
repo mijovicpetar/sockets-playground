@@ -1,0 +1,19 @@
+#loading {
+    position: absolute;
+    text-align: center;
+    margin-top: 50px;
+    left:0;
+    right:0;
+    top:0;
+    bottom:0;
+    position:fixed;
+}
+
+#loading-animation {
+    width: 200px;
+    height: 200px;
+}
+
+.hidden {
+    display: none;
+}

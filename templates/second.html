@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <title>Board</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
     <body>
+        <div id="loading" class="hidden">
+            <img id="loading-animation" src="{{url_for('static', filename='img/loading.gif')}}"/>
+        </div>
         <a href="{{ url_for('home') }}">Home</a>
         <h1>Sockets playground</h1>
         <h2>Request & Response</h2>
@@ -8,7 +16,7 @@
             <input type="submit" value="Send Request">
         </form>
         <label>Response:</label>
-        <input id="response2_input" type="text">
+        <input id="response_input" type="text">
         <h2>Server side events:</h2>
         <label>Number 1:</label>
         <input id="number_1" type="text" value="-1">

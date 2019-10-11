@@ -65,7 +65,7 @@ def home():
     return render_template('main.html')
 
 
-@app.route('/')
+@app.route('/second')
 def second():
     """Second route."""
     return render_template('second.html')
