@@ -1,6 +1,7 @@
 $(document).ready(function() {
     let socket = io('/app')
     let status_socket = io('/status')
+    let task_socket = io('/task')
 
     status_socket.on('status_subscription', function(msg, cb) {
         data = JSON.parse(msg)
@@ -8,6 +9,14 @@ $(document).ready(function() {
         document.getElementById('number_2').value = data.number_2
         stopAnimation()
     });
+
+    task_socket.on('long_task_completed', function(msg, cb) {
+        console.log('long_task_completed')
+        console.log(msg)
+        msg = JSON.parse(msg)
+        showResponse(msg.val)
+        stopAnimation()
+    })
 
     socket.on('some_event_response', function(msg, cb) {
         console.log('some_event_response')

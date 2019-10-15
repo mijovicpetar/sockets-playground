@@ -11,6 +11,7 @@ from flask_socketio import SocketIO, emit, Namespace
 import eventlet
 from eventlet.greenpool import GreenPool
 from zmq.error import ZMQError
+from json import loads
 
 pool = GreenPool(size=1000)
 
@@ -36,6 +37,24 @@ def background_thread(socket):
     print("Thread finished")
 
 
+def task_thread(socket):
+    try:
+        print('Okinuo task thread.')
+        while not socket.closed:
+            try:
+                eventlet.sleep(1)
+                res = socket.recv(flags=zmq.NOBLOCK)
+                print('Task info recieved: ', res)
+                res = res.decode('utf-8')
+                socketio.emit('long_task_completed', res, namespace="/task")
+            except ZMQError as e:
+                pass
+    except Exception as e:
+        traceback.print_exc()
+        return ""
+    print("Task thread finished")
+
+
 app = Flask(__name__)
 socketio = SocketIO(async_mode="eventlet")
 socketio.init_app(app)
@@ -48,10 +67,10 @@ zmq_main_socket = context.socket(zmq.REQ)
 zmq_main_socket.connect("tcp://localhost:5555")
 
 
-def create_listening_socket():
+def create_listening_socket(port):
     zmq_status_socket = context.socket(zmq.SUB)
     zmq_status_socket.setsockopt_string(zmq.SUBSCRIBE, "")
-    zmq_status_socket.connect("tcp://localhost:5556")
+    zmq_status_socket.connect("tcp://localhost:" + str(port))
     return zmq_status_socket
 
 
@@ -78,6 +97,8 @@ def some_event(message):
     encoded = 'data'.encode('utf-8')
     zmq_main_socket.send(encoded)
     response = zmq_main_socket.recv()
+    print('Emit will now begin')
+    print('Emiting: ', response)
     emit('some_event_response', response.decode('utf-8'))
 
 
@@ -95,15 +116,20 @@ class MyNamespace(Namespace):
 
     def on_connect(self):
         print("Starting connection")
-        self.socket = create_listening_socket()
-        self.worker = pool.spawn(background_thread, self.socket)
+        self.status_socket = create_listening_socket(5556)
+        self.task_socket = create_listening_socket(5557)
+        self.worker_thread = pool.spawn(background_thread, self.status_socket)
+        self.tasker_thread = pool.spawn(task_thread, self.task_socket)
+
         emit('my_response', {'data': 'Connected', 'count': 0})
         print("Connected")
 
     def on_disconnect(self):
         print("Server disconnected")
-        self.socket.close()
-        self.worker.wait()
+        self.status_socket.close()
+        self.task_socket()
+        self.worker_thread.wait()
+        self.tasker_thread.wait()
 
 
 socketio.on_namespace(MyNamespace('/status'))
